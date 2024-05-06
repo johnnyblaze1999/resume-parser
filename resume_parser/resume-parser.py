@@ -8,17 +8,13 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 data = ResumeParser('deedy-cv.pdf').get_extracted_data()
 
-print("Name:", data["name"])
-print("Email:", data["email"])
-print("Mobile Number:", data["mobile_number"])
-print("Skills:", data["skills"])
-print("College Name:", data["college_name"])
-print("Degree:", data["degree"])
-print("Designation:", data["designation"])
-print("Company Names:", data["company_names"])
-print("No Of Pages:", data["no_of_pages"])
-print("Total Experience:", data["total_experience"])
 
+# Print out data
+for k, v in data.items():
+    # Since value may contain non-ascii character. We need to encode it. 
+    # In this case, all non-ascii characters will return blank
+    v_str = str(v).encode('ascii', 'ignore').decode()
+    print(f"{k}:\n{v_str}\n")
 
 
 
