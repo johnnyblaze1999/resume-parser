@@ -1,37 +1,11 @@
 from collections import Counter
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import os
+import glob
 import json
 
-def match_keywords(resume_data, job_desc_text):
-    # Convert the resume data to text
-    resume_text = ' '.join([str(v) for v in resume_data.values()])
-
-    # Create the Document Term Matrix
-    text = [resume_text, job_desc_text]
-    cv = CountVectorizer()
-    count_matrix = cv.fit_transform(text)
-
-    # Get the match percentage
-    matchPercentage = cosine_similarity(count_matrix)[0][1] * 100
-    matchPercentage = round(matchPercentage, 2) # round to two decimal places
-    return matchPercentage
-
-def rank_resumes(resume_files, job_desc_text):
-    # Parse and match keywords for each resume
-    match_percentages = []
-
-    for file in resume_files:
-        with open(file, 'r') as f:
-            resume_data = json.load(f)
-        match_percentages.append((resume_data, match_keywords(resume_data, job_desc_text)))
-
-    # Sort by match percentage
-    ranked_resumes = sorted(match_percentages, key=lambda x: x[1], reverse=True)
-    return ranked_resumes
-
-resume_files = ['deedy-cv.pdf', 'jakes-resume.pdf']
-job_desc_text = """
+JOB_DESC_TEXT = """
 
 Requirements:
 
@@ -61,8 +35,40 @@ About SMART TECH SKILLS LLC:
 Established in 2004, Smart Tech Skills is a leading technology and professional services organization focusing on cutting-edge technologies.
 
 The company, headquartered in Marlborough, MA, effectively meets clients' technology needs nationwide, simplifying advanced technology management."""
+JSON_DIR = 'resume_data/json/'
 
-ranked_resumes = rank_resumes(resume_files, job_desc_text)
+
+def match_keywords(resume_data, job_desc_text):
+    # Convert the resume data to text
+    resume_text = ' '.join([str(v) for v in resume_data.values()])
+
+    # Create the Document Term Matrix
+    text = [resume_text, job_desc_text]
+    cv = CountVectorizer()
+    count_matrix = cv.fit_transform(text)
+
+    # Get the match percentage
+    matchPercentage = cosine_similarity(count_matrix)[0][1] * 100
+    matchPercentage = round(matchPercentage, 2) # round to two decimal places
+    return matchPercentage
+
+def rank_resumes(json_dir, job_desc_text):
+    # Parse and match keywords for each resume
+    match_percentages = []
+
+    # Get all JSON files in the directory
+    resume_files = glob.glob(os.path.join(json_dir, '*.json'))
+
+    for file in resume_files:
+        with open(file, 'r') as f:
+            resume_data = json.load(f)
+        match_percentages.append((resume_data, match_keywords(resume_data, job_desc_text)))
+
+    # Sort by match percentage
+    ranked_resumes = sorted(match_percentages, key=lambda x: x[1], reverse=True)
+    return ranked_resumes
+
+ranked_resumes = rank_resumes(JSON_DIR, JOB_DESC_TEXT)
 
 for resume, match_percentage in ranked_resumes:
     print(f"Resume: {resume['name']}... Match Percentage: {match_percentage}%")
